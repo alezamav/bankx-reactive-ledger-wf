@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN" monitorInterval="30">
+    <Appenders>
+        <Console name="STDOUT" target="SYSTEM_OUT">
+            <JsonLayout compact="true" eventEol="true"
+                        stacktraceAsString="true"
+                        includeTimeMillis="true"
+                        properties="true">
+                <KeyValuePair key="app" value="bankx-transactions"/>
+                <KeyValuePair key="env" value="dev"/>
+            </JsonLayout>
+        </Console>
+    </Appenders>
+
+    <Loggers>
+        <Logger name="org.springframework" level="INFO"/>
+        <Logger name="org.hibernate" level="WARN"/>
+        <Logger name="org.mongodb.driver" level="WARN"/>
+        <Logger name="com.bankx" level="DEBUG"/>
+        <Root level="INFO">
+            <AppenderRef ref="STDOUT"/>
+        </Root>
+    </Loggers>
+</Configuration>

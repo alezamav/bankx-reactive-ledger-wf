@@ -1,0 +1,65 @@
+# Puerto y URI de Mongo se sobrescriben por variable de entorno en contenedor/AKS.
+# Local: 8084 y Mongo en Docker. Contenedor: SERVER_PORT=8085 y MONGODB_URI desde Secret.
+server:
+  port: ${SERVER_PORT:8084}
+
+spring:
+  data:
+    mongodb:
+      uri: ${MONGODB_URI:mongodb://localhost:27017/bankx}
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+  h2:
+    console:
+      enabled: true
+      path: /h2
+
+bankx:
+  risk:
+    # Servicio remoto de riesgo. En local apunta al mock embebido en esta misma app.
+    base-url: ${RISK_BASE_URL:http://localhost:8084/mock/risk}
+
+logging:
+  level:
+    org.springframework.r2dbc: warn
+    org.springframework.data.mongodb: info
+    org.hibernate.SQL: debug
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include:
+          - health
+          - metrics
+  endpoint:
+    health:
+      # Habilita /actuator/health/readiness y /actuator/health/liveness,
+      # que son los que consumen las probes de Kubernetes.
+      probes:
+        enabled: true
+      show-details: always
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      riskClient:
+        slidingWindowSize: 10
+        # Sin este valor, Resilience4j usa 100 por defecto: el circuito nunca
+        # llegaria a abrirse en una demo de unas pocas llamadas.
+        minimumNumberOfCalls: 4
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 2
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+  retry:
+    instances:
+      riskClient:
+        maxAttempts: 3
+        waitDuration: 200ms
+  timelimiter:
+    instances:
+      riskClient:
+        timeoutDuration: 1s
